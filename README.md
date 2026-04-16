@@ -148,10 +148,4 @@ Found a bug, want to add more problems, or improve a template? PRs are welcome.
 
 ---
 
-## 📄 License
-
-MIT — free to use, share, and modify.
-
----
-
 *Built as a focused, no-fluff study resource. If this helped you crack an interview, consider starring the repo ⭐*
