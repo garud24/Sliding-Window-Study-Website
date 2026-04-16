@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sliding Window — Master Course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #18181f;
+  --bg4: #1f1f28;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8e8f0;
+  --text2: #9090a8;
+  --text3: #5a5a70;
+  --accent: #6c63ff;
+  --accent2: #a78bfa;
+  --gold: #f0b429;
+  --green: #34d399;
+  --red: #f87171;
+  --orange: #fb923c;
+  --cyan: #22d3ee;
+  --pink: #f472b6;
+  --r: 10px;
+  --r-sm: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* GRID BG */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* GLOW ORB */
+body::after {
+  content: '';
+  position: fixed;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(ellipse, rgba(108,99,255,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* LAYOUT */
+.wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* HEADER */
+header {
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,10,15,0.8);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo span {
+  background: linear-gradient(135deg, var(--accent2), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+nav { display: flex; gap: 4px; }
+
+nav a {
+  font-size: 13px;
+  color: var(--text2);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  transition: all .2s;
+  font-family: 'Syne', sans-serif;
+  font-weight: 500;
+}
+
+nav a:hover { color: var(--text); background: var(--bg3); }
+nav a.active { color: var(--accent2); background: rgba(167,139,250,0.1); }
+
+/* HERO */
+.hero {
+  padding: 80px 0 60px;
+  text-align: center;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(108,99,255,0.1);
+  border: 1px solid rgba(108,99,255,0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 12px;
+  color: var(--accent2);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin-bottom: 20px;
+}
+
+.hero h1 .line2 {
+  background: linear-gradient(135deg, var(--accent2) 0%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+  font-size: 17px;
+  color: var(--text2);
+  max-width: 520px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.stat-num span { color: var(--accent2); }
+.stat-label { font-size: 12px; color: var(--text3); font-family: 'Syne', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+/* SECTION HEADER */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding-top: 24px;
+}
+
+.section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent2);
+  opacity: 0.6;
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+}
+
+/* CARDS */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px 24px;
+  transition: border-color .2s;
+}
+
+.card:hover { border-color: var(--border2); }
+
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.card-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+@media (max-width: 700px) {
+  .card-grid, .card-grid-3 { grid-template-columns: 1fr; }
+}
+
+.card h3 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.card p, .card li {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+/* TAGS */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.tag-easy { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+.tag-med { background: rgba(240,180,41,0.1); color: var(--gold); border: 1px solid rgba(240,180,41,0.2); }
+.tag-hard { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+.tag-fixed { background: rgba(34,211,238,0.08); color: var(--cyan); border: 1px solid rgba(34,211,238,0.15); }
+.tag-var { background: rgba(167,139,250,0.08); color: var(--accent2); border: 1px solid rgba(167,139,250,0.15); }
+.tag-deque { background: rgba(244,114,182,0.08); color: var(--pink); border: 1px solid rgba(244,114,182,0.15); }
+.tag-exact { background: rgba(251,146,60,0.08); color: var(--orange); border: 1px solid rgba(251,146,60,0.15); }
+
+/* CODE BLOCKS */
+pre, code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 16px;
+  overflow-x: auto;
+  line-height: 1.8;
+  color: var(--text2);
+  margin: 10px 0;
+}
+
+pre .kw { color: var(--accent2); }
+pre .fn { color: var(--cyan); }
+pre .cm { color: var(--text3); font-style: italic; }
+pre .st { color: var(--green); }
+pre .nm { color: var(--gold); }
+pre .op { color: var(--pink); }
+
+code.inline {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--cyan);
+}
+
+/* PAGE SECTIONS */
+.page-section { 
+  padding: 40px 0 60px;
+  border-top: 1px solid var(--border);
+}
+
+.page-section:first-child { border-top: none; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 48px 0; }
+
+/* ===================== */
+/* THEORY SECTION        */
+/* ===================== */
+
+.theory-hero {
+  background: linear-gradient(135deg, rgba(108,99,255,0.08), rgba(34,211,238,0.05));
+  border: 1px solid rgba(108,99,255,0.15);
+  border-radius: var(--r);
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.theory-hero::before {
+  content: '{ }';
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 72px;
+  color: rgba(108,99,255,0.08);
+  font-weight: 300;
+}
+
+.theory-hero h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.theory-hero p {
+  font-size: 15px;
+  color: var(--text2);
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+.when-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) { .when-grid { grid-template-columns: 1fr; } }
+
+.when-card {
+  border-radius: var(--r);
+  padding: 20px;
+  border: 1px solid transparent;
+}
+
+.when-card.fixed-card {
+  background: rgba(34,211,238,0.04);
+  border-color: rgba(34,211,238,0.12);
+}
+
+.when-card.var-card {
+  background: rgba(167,139,250,0.04);
+  border-color: rgba(167,139,250,0.12);
+}
+
+.when-card h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.when-card ul { list-style: none; }
+.when-card li { font-size: 13px; color: var(--text2); padding: 3px 0; display: flex; gap: 8px; }
+.when-card li::before { content: '→'; color: var(--text3); flex-shrink: 0; }
+
+.template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .template-grid { grid-template-columns: 1fr; } }
+
+.template-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.template-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.template-head span {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.template-card pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--bg2);
+}
+
+/* COMPLEXITY TABLE */
+.complexity-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.complexity-table th {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+
+.complexity-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text2); }
+.complexity-table tr:last-child td { border-bottom: none; }
+.complexity-table tr:hover td { background: var(--bg3); }
+.complexity-table td:first-child { color: var(--text); font-weight: 500; }
+.time-badge { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(52,211,153,0.08); color: var(--green); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(52,211,153,0.15); }
+.space-badge { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(34,211,238,0.08); color: var(--cyan); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(34,211,238,0.15); }
+
+/* ===================== */
+/* VISUALIZER            */
+/* ===================== */
+
+.viz-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.viz-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.viz-tab {
+  flex: 1;
+  padding: 14px 20px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all .2s;
+  border-bottom: 2px solid transparent;
+}
+
+.viz-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); background: rgba(167,139,250,0.03); }
+.viz-tab:hover:not(.active) { color: var(--text2); background: var(--bg3); }
+
+.viz-body { padding: 28px; }
+
+.viz-desc {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.viz-desc strong { color: var(--accent2); }
+
+.array-display { margin: 16px 0; }
+.array-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); font-family: 'Syne', sans-serif; margin-bottom: 6px; }
+
+.cells-row { display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+
+.cell {
+  min-width: 48px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text2);
+  transition: all .3s cubic-bezier(0.34,1.56,0.64,1);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.cell.in-window {
+  background: rgba(108,99,255,0.15);
+  border-color: rgba(167,139,250,0.4);
+  color: var(--accent2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(108,99,255,0.15);
+}
+
+.cell .cell-idx {
+  font-size: 9px;
+  color: var(--text3);
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-family: 'Syne', sans-serif;
+}
+
+.ptr-labels { display: flex; gap: 6px; margin-top: 4px; }
+.ptr-lbl {
+  min-width: 48px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: transparent;
+  transition: all .3s;
+  flex-shrink: 0;
+}
+
+.ptr-lbl.show-l { color: var(--cyan); }
+.ptr-lbl.show-r { color: var(--pink); }
+.ptr-lbl.show-both { color: var(--accent2); }
+
+.viz-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.viz-stat {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.viz-stat label { color: var(--text3); font-family: 'Syne', sans-serif; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 2px; }
+.viz-stat .val { font-family: 'JetBrains Mono', monospace; color: var(--accent2); font-size: 15px; font-weight: 500; }
+
+.viz-msg {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 44px;
+  margin: 16px 0;
+  line-height: 1.6;
+}
+
+.viz-controls { display: flex; gap: 8px; }
+
+.btn {
+  padding: 8px 18px;
+  border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.btn:hover { background: var(--bg4); border-color: var(--border2); }
+.btn:disabled { opacity: 0.3; cursor: default; }
+.btn-primary { background: rgba(108,99,255,0.15); border-color: rgba(167,139,250,0.3); color: var(--accent2); }
+.btn-primary:hover { background: rgba(108,99,255,0.25); }
+
+/* ===================== */
+/* PATTERNS              */
+/* ===================== */
+
+.pattern-list { display: flex; flex-direction: column; gap: 12px; }
+
+.pattern-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+
+.pattern-item:hover { border-color: var(--border2); }
+
+.pattern-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  cursor: pointer;
+  user-select: none;
+  gap: 12px;
+}
+
+.pattern-header-left { display: flex; align-items: center; gap: 12px; }
+.pattern-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  min-width: 24px;
+}
+
+.pattern-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.pattern-chevron {
+  font-size: 12px;
+  color: var(--text3);
+  transition: transform .25s;
+  flex-shrink: 0;
+}
+
+.pattern-item.open .pattern-chevron { transform: rotate(90deg); }
+.pattern-item.open { border-color: rgba(167,139,250,0.25); }
+.pattern-item.open .pattern-name { color: var(--accent2); }
+
+.pattern-body {
+  display: none;
+  padding: 0 22px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.pattern-item.open .pattern-body { display: block; }
+
+.pattern-when {
+  background: rgba(108,99,255,0.05);
+  border: 1px solid rgba(108,99,255,0.1);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  margin: 16px 0 12px;
+  line-height: 1.7;
+}
+
+.pattern-when strong { color: var(--accent2); font-family: 'Syne', sans-serif; }
+
+.pattern-problems-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.prob-chip {
+  font-size: 11px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 10px;
+  color: var(--text2);
+  font-family: 'Syne', sans-serif;
+}
+
+/* ===================== */
+/* PROBLEMS TABLE        */
+/* ===================== */
+
+.prob-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+
+.filt-btn {
+  font-size: 12px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.filt-btn:hover { color: var(--text2); background: var(--bg3); }
+.filt-btn.on { background: var(--accent); border-color: var(--accent); color: white; }
+
+.problems-list { display: flex; flex-direction: column; gap: 0; }
+
+.prob-row {
+  border-bottom: 1px solid var(--border);
+  transition: all .15s;
+}
+
+.prob-row:last-child { border-bottom: none; }
+
+.prob-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+
+.prob-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  min-width: 28px;
+}
+
+.prob-title-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 160px;
+}
+
+.prob-tags { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+
+.prob-detail-box {
+  display: none;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  margin: 0 0 12px;
+}
+
+.prob-row.open .prob-detail-box { display: block; }
+
+.prob-hint {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.prob-hint strong { color: var(--gold); }
+
+/* ===================== */
+/* CHEAT SHEET           */
+/* ===================== */
+
+.cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .cheat-grid { grid-template-columns: 1fr; } }
+
+.cheat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+}
+
+.cheat-card h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  margin-bottom: 14px;
+}
+
+.decision-flow { display: flex; flex-direction: column; gap: 0; }
+
+.flow-step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.flow-step:last-child { border-bottom: none; }
+.flow-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent2); min-width: 20px; padding-top: 1px; }
+
+.trick-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.trick-item:last-child { border-bottom: none; }
+
+.trick-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.trick-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+/* FULL TEMPLATE SECTION */
+.full-templates { display: flex; flex-direction: column; gap: 16px; }
+
+.full-template {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.full-template-head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.full-template-head h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.full-template pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--bg2);
+  padding: 20px;
+}
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text3);
+  font-family: 'Syne', sans-serif;
+}
+
+footer span { color: var(--accent2); }
+
+/* SCROLL PROGRESS */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--cyan));
+  z-index: 1000;
+  transition: width .1s;
+}
+
+/* ANCHOR OFFSET */
+[id] { scroll-margin-top: 80px; }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate { animation: fadeUp .5s ease forwards; }
+.delay-1 { animation-delay: .1s; }
+.delay-2 { animation-delay: .2s; }
+.delay-3 { animation-delay: .3s; }
+
+/* MOBILE NAV */
+@media (max-width: 650px) {
+  nav { display: none; }
+  .hero { padding: 50px 0 40px; }
+}
+</style>
+</head>
+<body>
+
+<div class="scroll-progress" id="scrollProg"></div>
+
+<header>
+  <div class="header-inner">
+    <a href="#top" class="logo">⟨<span>SW</span>⟩ Sliding Window</a>
+    <nav id="mainNav">
+      <a href="#theory" class="active">Theory</a>
+      <a href="#visualizer">Visualizer</a>
+      <a href="#patterns">Patterns</a>
+      <a href="#problems">Problems</a>
+      <a href="#cheatsheet">Cheat Sheet</a>
+    </nav>
+  </div>
+</header>
+
+<div id="top"></div>
+
+<div class="wrapper">
+
+  <!-- HERO -->
+  <section class="hero animate">
+    <div class="hero-badge">⚡ DSA Master Course</div>
+    <h1>
+      Master<br>
+      <span class="line2">Sliding Window</span>
+    </h1>
+    <p>Every pattern. Every trick. Every LeetCode problem — with hints and templates. Built to make you interview-ready.</p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num"><span>6</span></div>
+        <div class="stat-label">Core Patterns</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span>20</span></div>
+        <div class="stat-label">LeetCode Problems</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">O(<span>n</span>)</div>
+        <div class="stat-label">Time Complexity</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= -->
+  <!-- THEORY                    -->
+  <!-- ========================= -->
+  <section id="theory" class="page-section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Theory</h2>
+    </div>
+
+    <div class="theory-hero">
+      <h2>What is a Sliding Window?</h2>
+      <p>A <strong>contiguous subarray or substring</strong> that moves through data. Instead of recomputing from scratch for every subarray — O(n²) — you <em>slide</em> the window: add the new rightmost element, drop the old leftmost. Result: <strong>O(n)</strong>.</p>
+    </div>
+
+    <div class="when-grid">
+      <div class="when-card fixed-card">
+        <h3><span class="tag tag-fixed">Fixed</span> Fixed Size Window</h3>
+        <ul>
+          <li>Problem gives you an exact size k</li>
+          <li>Max/min/sum/average over every k elements</li>
+          <li>Permutation or anagram matching</li>
+          <li>Window moves exactly 1 step at a time</li>
+        </ul>
+      </div>
+      <div class="when-card var-card">
+        <h3><span class="tag tag-var">Variable</span> Variable Size Window</h3>
+        <ul>
+          <li>"Longest/shortest subarray/substring"</li>
+          <li>"At most k distinct / zeros / flips"</li>
+          <li>Expand right freely, shrink left when invalid</li>
+          <li>Answer updates every iteration</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-header" style="padding-top:32px">
+      <span class="section-num">—</span>
+      <h2 class="section-title" style="font-size:18px">Core Templates</h2>
+    </div>
+
+    <div class="template-grid">
+      <div class="template-card">
+        <div class="template-head">
+          <span>Fixed Window</span>
+          <span class="tag tag-fixed">O(n)</span>
+        </div>
+<pre><span class="cm"># Build first window</span>
+<span class="fn">window</span> = <span class="fn">sum</span>(arr[:<span class="nm">k</span>])
+<span class="fn">best</span> = <span class="fn">window</span>
+
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">k</span>, <span class="fn">len</span>(arr)):
+    window += arr[i] - arr[i-<span class="nm">k</span>]
+    best = <span class="fn">max</span>(best, window)</pre>
+      </div>
+      <div class="template-card">
+        <div class="template-head">
+          <span>Variable Window</span>
+          <span class="tag tag-var">O(n)</span>
+        </div>
+<pre><span class="fn">left</span> = <span class="nm">0</span>
+<span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(arr)):
+    <span class="cm"># expand: add arr[right]</span>
+    <span class="kw">while</span> &lt;window invalid&gt;:
+        <span class="cm"># shrink: remove arr[left]</span>
+        left += <span class="nm">1</span>
+    ans = <span class="fn">max</span>(ans, right-left+<span class="nm">1</span>)</pre>
+      </div>
+    </div>
+
+    <div class="section-header" style="padding-top:32px">
+      <span class="section-num">—</span>
+      <h2 class="section-title" style="font-size:18px">When to use sliding window</h2>
+    </div>
+
+    <div class="card-grid-3" style="margin-bottom:20px">
+      <div class="card">
+        <h3>✓ Use it when</h3>
+        <p style="font-size:13px;color:var(--text2);">Problem mentions <strong style="color:var(--text)">contiguous subarray/substring</strong>, max/min/count in a window, "at most k", "exactly k", longest/shortest.</p>
+      </div>
+      <div class="card">
+        <h3>✗ Don't use it when</h3>
+        <p style="font-size:13px;color:var(--text2);">Subsequences (not contiguous), elements can be reused, or you need all permutations/combinations (use recursion/backtracking).</p>
+      </div>
+      <div class="card">
+        <h3>Key insight</h3>
+        <p style="font-size:13px;color:var(--text2);">Every element enters the window once and leaves once → total work = 2n = <strong style="color:var(--green)">O(n)</strong> even with the inner while loop.</p>
+      </div>
+    </div>
+
+    <div class="section-header" style="padding-top:32px">
+      <span class="section-num">—</span>
+      <h2 class="section-title" style="font-size:18px">Complexity Reference</h2>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="complexity-table">
+        <thead>
+          <tr>
+            <th>Pattern</th>
+            <th>Time</th>
+            <th>Space</th>
+            <th>Data Structure</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Fixed window — sum/count</td><td><span class="time-badge">O(n)</span></td><td><span class="space-badge">O(1)</span></td><td>Variables only</td></tr>
+          <tr><td>Variable — longest/shortest</td><td><span class="time-badge">O(n)</span></td><td><span class="space-badge">O(1)</span></td><td>Two pointers</td></tr>
+          <tr><td>Variable + frequency map</td><td><span class="time-badge">O(n)</span></td><td><span class="space-badge">O(k)</span></td><td>HashMap / Counter</td></tr>
+          <tr><td>Fixed + monotonic deque</td><td><span class="time-badge">O(n)</span></td><td><span class="space-badge">O(k)</span></td><td>Deque of indices</td></tr>
+          <tr><td>Brute force (no sliding window)</td><td><span class="time-badge" style="background:rgba(248,113,113,0.08);color:var(--red);border-color:rgba(248,113,113,0.2)">O(n²)</span></td><td><span class="space-badge">O(1)</span></td><td>Nested loops</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========================= -->
+  <!-- VISUALIZER                -->
+  <!-- ========================= -->
+  <section id="visualizer" class="page-section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Visualizer</h2>
+    </div>
+
+    <div class="viz-section">
+      <div class="viz-tabs">
+        <button class="viz-tab active" onclick="setMode('fixed',this)">Fixed Window — Max Sum (k=3)</button>
+        <button class="viz-tab" onclick="setMode('var',this)">Variable Window — Max Ones (k=2 zeros)</button>
+      </div>
+      <div class="viz-body">
+        <div class="viz-desc" id="vizDesc">
+          <strong>Problem:</strong> Find max sum subarray of size k=3 &nbsp;|&nbsp; arr = [2, 1, 5, 1, 3, 2]
+        </div>
+
+        <div class="array-display">
+          <div class="array-label">Array</div>
+          <div class="cells-row" id="cellsRow"></div>
+          <div class="ptr-labels" id="ptrLabels"></div>
+        </div>
+
+        <div class="viz-stats" id="vizStats"></div>
+
+        <div class="viz-msg" id="vizMsg">Press Next to start stepping through the algorithm.</div>
+
+        <div class="viz-controls">
+          <button class="btn" onclick="stepViz(-1)" id="btnPrev" disabled>← Prev</button>
+          <button class="btn btn-primary" onclick="stepViz(1)" id="btnNext">Next →</button>
+          <button class="btn" onclick="resetViz()">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= -->
+  <!-- PATTERNS                  -->
+  <!-- ========================= -->
+  <section id="patterns" class="page-section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">All Patterns</h2>
+    </div>
+
+    <div class="pattern-list" id="patternList"></div>
+  </section>
+
+  <!-- ========================= -->
+  <!-- PROBLEMS                  -->
+  <!-- ========================= -->
+  <section id="problems" class="page-section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">LeetCode Problems</h2>
+    </div>
+
+    <div class="prob-filters" id="probFilters"></div>
+    <div class="problems-list" id="problemsList"></div>
+  </section>
+
+  <!-- ========================= -->
+  <!-- CHEAT SHEET               -->
+  <!-- ========================= -->
+  <section id="cheatsheet" class="page-section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Cheat Sheet</h2>
+    </div>
+
+    <div class="cheat-grid" style="margin-bottom:20px">
+      <div class="cheat-card">
+        <h3>Interview Decision Tree</h3>
+        <div class="decision-flow">
+          <div class="flow-step"><span class="flow-num">1.</span><span>Is it a <strong style="color:var(--text)">contiguous</strong> subarray/substring problem? → YES → Sliding Window</span></div>
+          <div class="flow-step"><span class="flow-num">2.</span><span>Is window size <strong style="color:var(--cyan)">fixed</strong>? → Use fixed template</span></div>
+          <div class="flow-step"><span class="flow-num">3.</span><span>Is window size <strong style="color:var(--accent2)">variable</strong>? → Expand right, shrink left while invalid</span></div>
+          <div class="flow-step"><span class="flow-num">4.</span><span>Need <strong style="color:var(--text)">frequency count</strong>? → Add HashMap / Counter</span></div>
+          <div class="flow-step"><span class="flow-num">5.</span><span>Need window <strong style="color:var(--text)">max/min</strong>? → Add Monotonic Deque</span></div>
+          <div class="flow-step"><span class="flow-num">6.</span><span><strong style="color:var(--gold)">Exactly k</strong> something? → atMost(k) − atMost(k−1) trick</span></div>
+        </div>
+      </div>
+      <div class="cheat-card">
+        <h3>Key Tricks</h3>
+        <div>
+          <div class="trick-item">
+            <div class="trick-title">Exactly k → atMost(k) − atMost(k−1)</div>
+            <div class="trick-desc">Converts hard exact-count problems into two easy variable-window passes. Works for distinct chars, ones, specific values.</div>
+          </div>
+          <div class="trick-item">
+            <div class="trick-title">Monotonic deque for window max/min</div>
+            <div class="trick-desc">Maintain deque of indices in decreasing order. Front = current max. Pop front if out of window. Pop back if smaller than new element.</div>
+          </div>
+          <div class="trick-item">
+            <div class="trick-title">Count all valid subarrays ending at right</div>
+            <div class="trick-desc">When window is valid, <code class="inline">ans += right − left + 1</code>. This counts all valid subarrays ending at the current right pointer.</div>
+          </div>
+          <div class="trick-item">
+            <div class="trick-title">Write the VIOLATION condition</div>
+            <div class="trick-desc">In your while loop: <code class="inline">while distinct > k</code>, not while valid. Shrink when constraint is BROKEN.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header" style="padding-top:32px">
+      <span class="section-num">—</span>
+      <h2 class="section-title" style="font-size:18px">All Templates Side-by-Side</h2>
+    </div>
+
+    <div class="full-templates" id="fullTemplates"></div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrapper">
+    Sliding Window Master Course &nbsp;·&nbsp; Built for <span>interview prep</span> &nbsp;·&nbsp; Covers all LeetCode patterns
+  </div>
+</footer>
+
+<script>
+// ================== DATA ==================
+const PATTERNS_DATA = [
+  {
+    id:'fixed', name:'Fixed Size Window', type:'fixed',
+    desc:'Window size k stays constant throughout. Build the first window, then slide right by 1 on each step — add arr[right], remove arr[right−k].',
+    when:'The problem gives you an explicit k. You\'re computing max/min/sum/average over every window of size k. Also used for permutation/anagram matching.',
+    template:`<span class="kw">def</span> <span class="fn">max_sum_subarray</span>(arr, k):
+    window = <span class="fn">sum</span>(arr[:<span class="nm">k</span>])
+    best = window
+
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">k</span>, <span class="fn">len</span>(arr)):
+        window += arr[i] - arr[i - <span class="nm">k</span>]  <span class="cm"># slide</span>
+        best = <span class="fn">max</span>(best, window)
+
+    <span class="kw">return</span> best`,
+    problems:['Maximum Sum Subarray of Size K','Maximum Average Subarray I','Permutation in String','Find All Anagrams in a String']
+  },
+  {
+    id:'varmax', name:'Variable Window — Maximize', type:'var',
+    desc:'Expand right pointer freely. Shrink left pointer when the window constraint is violated. Record the window size after each shrink.',
+    when:'"Longest substring/subarray with at most k..." type problems. You want to MAXIMIZE the window while staying valid.',
+    template:`<span class="fn">left</span> = <span class="nm">0</span>
+freq = {}
+
+<span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(arr)):
+    freq[arr[right]] = freq.get(arr[right], <span class="nm">0</span>) + <span class="nm">1</span>  <span class="cm"># expand</span>
+
+    <span class="kw">while</span> <span class="fn">len</span>(freq) > k:               <span class="cm"># invalid → shrink</span>
+        freq[arr[left]] -= <span class="nm">1</span>
+        <span class="kw">if</span> freq[arr[left]] == <span class="nm">0</span>:
+            <span class="kw">del</span> freq[arr[left]]
+        left += <span class="nm">1</span>
+
+    ans = <span class="fn">max</span>(ans, right - left + <span class="nm">1</span>)  <span class="cm"># update</span>`,
+    problems:['Longest Substring Without Repeating Characters','Fruits Into Baskets','Max Consecutive Ones III','Longest Repeating Character Replacement','Longest Substring with At Most K Distinct']
+  },
+  {
+    id:'varmin', name:'Variable Window — Minimize', type:'var',
+    desc:'Expand right until valid. Then shrink left WHILE still valid, recording min length inside the shrink loop.',
+    when:'"Minimum length subarray/substring that satisfies condition." Shrink as much as possible while maintaining validity.',
+    template:`<span class="fn">left</span> = s = <span class="nm">0</span>
+ans = <span class="fn">float</span>(<span class="st">'inf'</span>)
+
+<span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(nums)):
+    s += nums[right]               <span class="cm"># expand</span>
+
+    <span class="kw">while</span> s >= target:             <span class="cm"># still valid → shrink</span>
+        ans = <span class="fn">min</span>(ans, right-left+<span class="nm">1</span>)
+        s -= nums[left]
+        left += <span class="nm">1</span>
+
+<span class="kw">return</span> ans <span class="kw">if</span> ans != <span class="fn">float</span>(<span class="st">'inf'</span>) <span class="kw">else</span> <span class="nm">0</span>`,
+    problems:['Minimum Size Subarray Sum','Minimum Window Substring','Smallest Subarray with Sum >= K']
+  },
+  {
+    id:'exactk', name:'Exactly K — Subtraction Trick', type:'exact',
+    desc:'Subarrays with EXACTLY k distinct = atMost(k) − atMost(k−1). Converts an exact-count problem into two simpler variable-window passes.',
+    when:'Problem says "exactly k distinct", "exactly k ones", "subarrays with sum exactly S". Direct exact-window is tricky — use this trick.',
+    template:`<span class="kw">def</span> <span class="fn">solve</span>(nums, k):
+    <span class="kw">return</span> <span class="fn">atMost</span>(nums, k) - <span class="fn">atMost</span>(nums, k-<span class="nm">1</span>)
+
+<span class="kw">def</span> <span class="fn">atMost</span>(nums, k):
+    cnt = {}
+    left = res = <span class="nm">0</span>
+
+    <span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(nums)):
+        cnt[nums[right]] = cnt.get(nums[right], <span class="nm">0</span>) + <span class="nm">1</span>
+
+        <span class="kw">while</span> <span class="fn">len</span>(cnt) > k:
+            cnt[nums[left]] -= <span class="nm">1</span>
+            <span class="kw">if</span> cnt[nums[left]] == <span class="nm">0</span>:
+                <span class="kw">del</span> cnt[nums[left]]
+            left += <span class="nm">1</span>
+
+        res += right - left + <span class="nm">1</span>  <span class="cm"># all subarrays ending at right</span>
+
+    <span class="kw">return</span> res`,
+    problems:['Subarrays with K Different Integers','Count Number of Nice Subarrays','Binary Subarrays With Sum']
+  },
+  {
+    id:'deque', name:'Monotonic Deque — Window Max/Min', type:'deque',
+    desc:'Maintain a deque of indices in decreasing value order. Front always holds the index of the maximum element in the current window.',
+    when:'Need max or min of EVERY window of size k in O(n). Naive approach recomputes max each time = O(nk). Deque gives O(n).',
+    template:`<span class="kw">from</span> collections <span class="kw">import</span> deque
+
+<span class="kw">def</span> <span class="fn">sliding_window_max</span>(nums, k):
+    dq = deque()     <span class="cm"># stores indices, decreasing values</span>
+    result = []
+
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(nums)):
+        <span class="cm"># remove indices outside window</span>
+        <span class="kw">while</span> dq <span class="kw">and</span> dq[<span class="nm">0</span>] < i - k + <span class="nm">1</span>:
+            dq.popleft()
+
+        <span class="cm"># remove smaller elements from back</span>
+        <span class="kw">while</span> dq <span class="kw">and</span> nums[dq[-<span class="nm">1</span>]] < nums[i]:
+            dq.pop()
+
+        dq.append(i)
+
+        <span class="kw">if</span> i >= k - <span class="nm">1</span>:                    <span class="cm"># window is full</span>
+            result.append(nums[dq[<span class="nm">0</span>]])  <span class="cm"># front = max</span>
+
+    <span class="kw">return</span> result`,
+    problems:['Sliding Window Maximum','Jump Game VI','Constrained Subsequence Sum']
+  },
+  {
+    id:'hashmap', name:'Window + HashMap / Counter', type:'var',
+    desc:'Track element/character frequencies inside the window. Use a Counter/dict to count, update, and validate on each expansion or shrink.',
+    when:'Anagram matching, minimum window substring, longest string with valid char frequencies. Whenever you need to track "how many of each" inside the window.',
+    template:`<span class="kw">from</span> collections <span class="kw">import</span> Counter
+
+<span class="kw">def</span> <span class="fn">min_window</span>(s, t):
+    need = Counter(t)
+    have, formed = {}, <span class="nm">0</span>
+    left = <span class="nm">0</span>
+    ans = <span class="st">""</span>
+
+    <span class="kw">for</span> right, c <span class="kw">in</span> <span class="fn">enumerate</span>(s):
+        have[c] = have.get(c, <span class="nm">0</span>) + <span class="nm">1</span>
+        <span class="kw">if</span> c <span class="kw">in</span> need <span class="kw">and</span> have[c] == need[c]:
+            formed += <span class="nm">1</span>
+
+        <span class="kw">while</span> formed == <span class="fn">len</span>(need):     <span class="cm"># valid → shrink</span>
+            <span class="kw">if</span> <span class="kw">not</span> ans <span class="kw">or</span> right-left+<span class="nm">1</span> < <span class="fn">len</span>(ans):
+                ans = s[left:right+<span class="nm">1</span>]
+            lc = s[left]
+            have[lc] -= <span class="nm">1</span>
+            <span class="kw">if</span> lc <span class="kw">in</span> need <span class="kw">and</span> have[lc] < need[lc]:
+                formed -= <span class="nm">1</span>
+            left += <span class="nm">1</span>
+
+    <span class="kw">return</span> ans`,
+    problems:['Minimum Window Substring','Permutation in String','Find All Anagrams in a String','Longest Substring with At Most 2 Distinct','Longest Substring with At Most K Distinct']
+  }
+];
+
+const TAG_CLASS = {fixed:'tag-fixed',var:'tag-var',exact:'tag-exact',deque:'tag-deque'};
+const TAG_LABEL = {fixed:'Fixed',var:'Variable',exact:'Exact-K',deque:'Deque'};
+
+const PROBLEMS_DATA = [
+  {n:'643/1',title:'Maximum Average Subarray I',diff:'Easy',pattern:'fixed',lc:'643',
+   hint:'Build first window of size k, compute sum. Slide: add arr[i], subtract arr[i−k]. Track max sum, return max_sum/k at end.',
+   tpl:`k=3; arr=[1,12,-5,-6,50,3]
+window=sum(arr[:k]); best=window
+for i in range(k,len(arr)):
+    window+=arr[i]-arr[i-k]
+    best=max(best,window)
+return best/k`},
+  {n:'3',title:'Longest Substring Without Repeating Characters',diff:'Medium',pattern:'var',lc:'3',
+   hint:'Variable window. Use dict to store last seen index of each char. When char repeats, jump left to max(left, last_seen[c]+1).',
+   tpl:`seen={}; left=ans=0
+for right,c in enumerate(s):
+    if c in seen and seen[c]>=left:
+        left=seen[c]+1
+    seen[c]=right
+    ans=max(ans,right-left+1)
+return ans`},
+  {n:'76',title:'Minimum Window Substring',diff:'Hard',pattern:'var',lc:'76',
+   hint:'Expand until all chars of t are covered (track "formed" count). Then shrink while still valid. Record min window inside shrink loop.',
+   tpl:`need=Counter(t); have={}
+formed=left=0; ans=""
+for r,c in enumerate(s):
+    have[c]=have.get(c,0)+1
+    if c in need and have[c]==need[c]:
+        formed+=1
+    while formed==len(need):
+        if not ans or r-left+1<len(ans): ans=s[left:r+1]
+        lc=s[left]; have[lc]-=1
+        if lc in need and have[lc]<need[lc]: formed-=1
+        left+=1
+return ans`},
+  {n:'239',title:'Sliding Window Maximum',diff:'Hard',pattern:'deque',lc:'239',
+   hint:'Monotonic decreasing deque of indices. Pop front if out of window. Pop back if nums[back] < nums[i]. Append i. Front = window max.',
+   tpl:`from collections import deque
+dq=deque(); res=[]
+for i,x in enumerate(nums):
+    while dq and dq[0]<i-k+1: dq.popleft()
+    while dq and nums[dq[-1]]<x: dq.pop()
+    dq.append(i)
+    if i>=k-1: res.append(nums[dq[0]])
+return res`},
+  {n:'567',title:'Permutation in String',diff:'Medium',pattern:'fixed',lc:'567',
+   hint:'Fixed window of size len(s1). Compare frequency Counter of s1 with current window. Match = found. Slide one step at a time.',
+   tpl:`k=len(s1); need=Counter(s1)
+cur=Counter(s2[:k])
+if cur==need: return True
+for i in range(k,len(s2)):
+    cur[s2[i]]+=1
+    cur[s2[i-k]]-=1
+    if cur[s2[i-k]]==0: del cur[s2[i-k]]
+    if cur==need: return True
+return False`},
+  {n:'438',title:'Find All Anagrams in a String',diff:'Medium',pattern:'fixed',lc:'438',
+   hint:'Same as LC 567 (Permutation in String) — just collect all matching start indices instead of returning on first match.',
+   tpl:`# Same as LC 567 but collect indices
+res=[]
+# ... when cur==need: res.append(i-k+1)
+return res`},
+  {n:'904',title:'Fruits Into Baskets',diff:'Medium',pattern:'var',lc:'904',
+   hint:'At most 2 distinct fruit types = at most 2 keys in dict. Variable window, shrink when dict has > 2 keys.',
+   tpl:`basket={}; left=ans=0
+for r,f in enumerate(fruits):
+    basket[f]=basket.get(f,0)+1
+    while len(basket)>2:
+        basket[fruits[left]]-=1
+        if basket[fruits[left]]==0:
+            del basket[fruits[left]]
+        left+=1
+    ans=max(ans,r-left+1)
+return ans`},
+  {n:'1004',title:'Max Consecutive Ones III',diff:'Medium',pattern:'var',lc:'1004',
+   hint:'At most k zeros allowed in window. Count zeros; when zeros > k, shrink left. Answer = max window length.',
+   tpl:`zeros=left=ans=0
+for r in range(len(nums)):
+    if nums[r]==0: zeros+=1
+    while zeros>k:
+        if nums[left]==0: zeros-=1
+        left+=1
+    ans=max(ans,r-left+1)
+return ans`},
+  {n:'424',title:'Longest Repeating Character Replacement',diff:'Medium',pattern:'var',lc:'424',
+   hint:'Window valid if (window_size − max_freq) ≤ k. Track max freq of any char. Shrink when invalid. Key: max_freq never decreases (optimization).',
+   tpl:`freq={}; mx=left=ans=0
+for r,c in enumerate(s):
+    freq[c]=freq.get(c,0)+1
+    mx=max(mx,freq[c])
+    if (r-left+1)-mx>k:
+        freq[s[left]]-=1
+        left+=1
+    ans=max(ans,r-left+1)
+return ans`},
+  {n:'209',title:'Minimum Size Subarray Sum',diff:'Medium',pattern:'var',lc:'209',
+   hint:'Expand right adding to sum. While sum >= target: record min length, subtract nums[left], left++. Shrink as much as possible.',
+   tpl:`left=s=0; ans=float('inf')
+for r in range(len(nums)):
+    s+=nums[r]
+    while s>=target:
+        ans=min(ans,r-left+1)
+        s-=nums[left]; left+=1
+return ans if ans!=float('inf') else 0`},
+  {n:'992',title:'Subarrays with K Different Integers',diff:'Hard',pattern:'exact',lc:'992',
+   hint:'atMost(k) − atMost(k−1). Write helper that counts subarrays with AT MOST k distinct. Each iteration adds right−left+1 to count.',
+   tpl:`def atMost(k):
+    cnt={}; left=res=0
+    for r in range(len(nums)):
+        cnt[nums[r]]=cnt.get(nums[r],0)+1
+        while len(cnt)>k:
+            cnt[nums[left]]-=1
+            if cnt[nums[left]]==0: del cnt[nums[left]]
+            left+=1
+        res+=r-left+1
+    return res
+return atMost(k)-atMost(k-1)`},
+  {n:'1248',title:'Count Number of Nice Subarrays',diff:'Medium',pattern:'exact',lc:'1248',
+   hint:'Exactly k odd numbers. Same atMost trick: treat odd numbers as "distinct elements". atMost(k) − atMost(k−1).',
+   tpl:`def atMost(k):
+    cnt=left=res=0
+    for r in range(len(nums)):
+        if nums[r]%2==1: cnt+=1
+        while cnt>k:
+            if nums[left]%2==1: cnt-=1
+            left+=1
+        res+=r-left+1
+    return res
+return atMost(k)-atMost(k-1)`},
+  {n:'930',title:'Binary Subarrays With Sum',diff:'Medium',pattern:'exact',lc:'930',
+   hint:'Exactly "goal" ones in binary array. atMost(goal) − atMost(goal−1). Handle edge case goal=0 in atMost.',
+   tpl:`def atMost(g):
+    if g<0: return 0
+    s=left=res=0
+    for r in range(len(nums)):
+        s+=nums[r]
+        while s>g:
+            s-=nums[left]; left+=1
+        res+=r-left+1
+    return res
+return atMost(goal)-atMost(goal-1)`},
+  {n:'1493',title:'Longest Subarray of 1s After Deleting One Element',diff:'Medium',pattern:'var',lc:'1493',
+   hint:'At most 1 zero (like LC 1004 with k=1). Final answer = window length − 1 (to account for the deleted element).',
+   tpl:`zeros=left=ans=0
+for r in range(len(nums)):
+    if nums[r]==0: zeros+=1
+    while zeros>1:
+        if nums[left]==0: zeros-=1
+        left+=1
+    ans=max(ans,r-left)  # -1 for deleted element
+return ans`},
+  {n:'1876',title:'Substrings of Size Three with Distinct Characters',diff:'Easy',pattern:'fixed',lc:'1876',
+   hint:'Fixed window k=3. For each window, check if all 3 characters are distinct using a set. Count windows where len(set)==3.',
+   tpl:`ans=0
+for i in range(len(s)-2):
+    if len(set(s[i:i+3]))==3:
+        ans+=1
+return ans`},
+  {n:'1696',title:'Jump Game VI',diff:'Medium',pattern:'deque',lc:'1696',
+   hint:'DP + sliding window max. dp[i] = nums[i] + max(dp[i−k..i−1]). Use monotonic deque to get max in window O(n) total.',
+   tpl:`from collections import deque
+n=len(nums); dp=[0]*n; dp[0]=nums[0]
+dq=deque([0])
+for i in range(1,n):
+    while dq and dq[0]<i-k: dq.popleft()
+    dp[i]=nums[i]+dp[dq[0]]
+    while dq and dp[dq[-1]]<=dp[i]: dq.pop()
+    dq.append(i)
+return dp[-1]`},
+  {n:'340',title:'Longest Substring with At Most K Distinct Characters',diff:'Medium',pattern:'var',lc:'340',
+   hint:'General version of Fruits Into Baskets. Variable window, shrink when dict has > k keys. Identical template, just replace 2 with k.',
+   tpl:`freq={}; left=ans=0
+for r,c in enumerate(s):
+    freq[c]=freq.get(c,0)+1
+    while len(freq)>k:
+        freq[s[left]]-=1
+        if freq[s[left]]==0: del freq[s[left]]
+        left+=1
+    ans=max(ans,r-left+1)
+return ans`},
+  {n:'159',title:'Longest Substring with At Most 2 Distinct Characters',diff:'Medium',pattern:'var',lc:'159',
+   hint:'Special case of LC 340 with k=2. Same template with dict. Check out Fruits Into Baskets for an intuitive framing.',
+   tpl:`# Identical to LC 340 with k=2
+# See Fruits Into Baskets template`},
+  {n:'795',title:'Number of Subarrays with Bounded Maximum',diff:'Medium',pattern:'var',lc:'795',
+   hint:'Count subarrays where max ∈ [left, right]. Decompose: atMost(right) − atMost(left−1) where atMost(b) counts subarrays with max ≤ b.',
+   tpl:`def atMost(bound):
+    left=res=cur=0
+    for x in nums:
+        cur=cur+1 if x<=bound else 0
+        res+=cur
+    return res
+return atMost(right)-atMost(left-1)`},
+  {n:'1425',title:'Constrained Subsequence Sum',diff:'Hard',pattern:'deque',lc:'1425',
+   hint:'DP with window max. dp[i]=nums[i]+max(0, max(dp[i−k..i−1])). Monotonic deque for O(n) window max. Only add positive dp values.',
+   tpl:`from collections import deque
+dp=nums[:]; dq=deque()
+for i in range(len(nums)):
+    dp[i]=nums[i]+(dp[dq[0]] if dq else 0)
+    while dq and dp[dq[-1]]<=dp[i]: dq.pop()
+    if dp[i]>0: dq.append(i)
+    if dq and dq[0]<i-k+1: dq.popleft()
+return max(dp)`},
+];
+
+const DIFF_CLASS = {Easy:'tag-easy',Medium:'tag-med',Hard:'tag-hard'};
+const PAT_CLASS = {fixed:'tag-fixed',var:'tag-var',exact:'tag-exact',deque:'tag-deque'};
+const PAT_LABEL = {fixed:'Fixed',var:'Variable',exact:'Exact-K',deque:'Deque'};
+
+// ================== VIZ ==================
+let vizMode='fixed', vizStep=0;
+
+const fixedArr=[2,1,5,1,3,2], K=3;
+const varArr=[1,1,1,0,0,0,1,1,1,1,0], VK=2;
+
+function buildFixed(){
+  const steps=[];
+  let ws=fixedArr.slice(0,K).reduce((a,b)=>a+b,0), mx=ws;
+  steps.push({win:[0,K-1],sum:ws,mx,msg:`Build initial window [0..${K-1}]: sum = ${ws} → max = ${mx}`});
+  for(let i=K;i<fixedArr.length;i++){
+    ws+=fixedArr[i]-fixedArr[i-K]; mx=Math.max(mx,ws);
+    steps.push({win:[i-K+1,i],sum:ws,mx,msg:`Slide → add ${fixedArr[i]}, remove ${fixedArr[i-K]}: sum = ${ws} → max = ${mx}`});
+  }
+  return steps;
+}
+
+function buildVar(){
+  const steps=[];
+  let left=0,zeros=0,mx=0;
+  for(let r=0;r<varArr.length;r++){
+    if(varArr[r]===0) zeros++;
+    while(zeros>VK){
+      if(varArr[left]===0) zeros--;
+      left++;
+    }
+    mx=Math.max(mx,r-left+1);
+    steps.push({left,right:r,zeros,mx,msg:`right=${r} (val=${varArr[r]}): zeros=${zeros}, window=[${left}..${r}] len=${r-left+1}, maxLen=${mx}`});
+  }
+  return steps;
+}
+
+const fixedSteps=buildFixed(), varSteps=buildVar();
+
+function renderViz(){
+  const arr=vizMode==='fixed'?fixedArr:varArr;
+  const steps=vizMode==='fixed'?fixedSteps:varSteps;
+  const s=steps[Math.min(vizStep,steps.length-1)];
+  let L,R;
+  if(vizMode==='fixed'){ L=s.win[0]; R=s.win[1]; }
+  else { L=s.left; R=s.right; }
+
+  const cr=document.getElementById('cellsRow');
+  const pl=document.getElementById('ptrLabels');
+  cr.innerHTML=arr.map((v,i)=>`<div class="cell${i>=L&&i<=R?' in-window':''}"><span class="cell-idx">${i}</span>${v}</div>`).join('');
+  pl.innerHTML=arr.map((_,i)=>{
+    let lbl='',cls='ptr-lbl';
+    if(i===L&&i===R){lbl='L/R';cls+=' show-both';}
+    else if(i===L){lbl='L';cls+=' show-l';}
+    else if(i===R){lbl='R';cls+=' show-r';}
+    return `<div class="${cls}">${lbl}</div>`;
+  }).join('');
+
+  const sv=document.getElementById('vizStats');
+  if(vizMode==='fixed'){
+    sv.innerHTML=`<div class="viz-stat"><label>Window</label><div class="val">[${L}..${R}]</div></div><div class="viz-stat"><label>Sum</label><div class="val">${s.sum}</div></div><div class="viz-stat"><label>Max Sum</label><div class="val">${s.mx}</div></div><div class="viz-stat"><label>Step</label><div class="val">${vizStep+1}/${steps.length}</div></div>`;
+  } else {
+    sv.innerHTML=`<div class="viz-stat"><label>Left</label><div class="val">${s.left}</div></div><div class="viz-stat"><label>Right</label><div class="val">${s.right}</div></div><div class="viz-stat"><label>Zeros</label><div class="val">${s.zeros}</div></div><div class="viz-stat"><label>Max Length</label><div class="val">${s.mx}</div></div>`;
+  }
+
+  document.getElementById('vizMsg').textContent=s.msg;
+  document.getElementById('btnPrev').disabled=vizStep===0;
+  document.getElementById('btnNext').disabled=vizStep>=steps.length-1;
+}
+
+function setMode(m,btn){
+  vizMode=m; vizStep=0;
+  document.querySelectorAll('.viz-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('vizDesc').innerHTML=m==='fixed'
+    ?'<strong>Problem:</strong> Find max sum subarray of size k=3 &nbsp;|&nbsp; arr = [2, 1, 5, 1, 3, 2]'
+    :'<strong>Problem:</strong> Max consecutive ones with at most k=2 zeros &nbsp;|&nbsp; arr = [1,1,1,0,0,0,1,1,1,1,0]';
+  renderViz();
+}
+
+function stepViz(d){
+  const steps=vizMode==='fixed'?fixedSteps:varSteps;
+  vizStep=Math.max(0,Math.min(vizStep+d,steps.length-1));
+  renderViz();
+}
+
+function resetViz(){ vizStep=0; renderViz(); }
+
+// ================== PATTERNS ==================
+function buildPatterns(){
+  const el=document.getElementById('patternList');
+  PATTERNS_DATA.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.className='pattern-item';
+    div.innerHTML=`
+      <div class="pattern-header" onclick="togglePattern(this.parentElement)">
+        <div class="pattern-header-left">
+          <span class="pattern-num">0${i+1}</span>
+          <span class="pattern-name">${p.name}</span>
+          <span class="tag ${TAG_CLASS[p.type]}">${TAG_LABEL[p.type]}</span>
+        </div>
+        <span class="pattern-chevron">▶</span>
+      </div>
+      <div class="pattern-body">
+        <div class="pattern-when"><strong>Use when:</strong> ${p.when}</div>
+        <pre>${p.template}</pre>
+        <div class="pattern-problems-list">
+          ${p.problems.map(pr=>`<span class="prob-chip">${pr}</span>`).join('')}
+        </div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+function togglePattern(el){
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.pattern-item').forEach(p=>p.classList.remove('open'));
+  if(!wasOpen) el.classList.add('open');
+}
+
+// ================== PROBLEMS ==================
+let activeFilters=new Set(['All']);
+
+function buildProbFilters(){
+  const el=document.getElementById('probFilters');
+  const filters=['All','Easy','Medium','Hard','fixed','var','exact','deque'];
+  const labels={fixed:'Fixed',var:'Variable',exact:'Exact-K',deque:'Deque'};
+  filters.forEach(f=>{
+    const btn=document.createElement('button');
+    btn.className='filt-btn'+(f==='All'?' on':'');
+    btn.textContent=labels[f]||f;
+    btn.onclick=()=>{
+      if(f==='All'){ activeFilters=new Set(['All']); }
+      else {
+        activeFilters.delete('All');
+        activeFilters.has(f)?activeFilters.delete(f):activeFilters.add(f);
+        if(activeFilters.size===0) activeFilters.add('All');
+      }
+      document.querySelectorAll('.filt-btn').forEach((b,i)=>b.classList.toggle('on',activeFilters.has(filters[i])));
+      renderProblems();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderProblems(){
+  const el=document.getElementById('problemsList');
+  el.innerHTML='';
+  const filtered=PROBLEMS_DATA.filter(p=>
+    activeFilters.has('All')||activeFilters.has(p.diff)||activeFilters.has(p.pattern)
+  );
+  filtered.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='prob-row';
+    row.innerHTML=`
+      <div class="prob-summary" onclick="toggleProb(this.parentElement)">
+        <span class="prob-num">${p.n}</span>
+        <span class="prob-title-text">${p.title}</span>
+        <div class="prob-tags">
+          <span class="tag ${DIFF_CLASS[p.diff]}">${p.diff}</span>
+          <span class="tag ${PAT_CLASS[p.pattern]}">${PAT_LABEL[p.pattern]}</span>
+        </div>
+      </div>
+      <div class="prob-detail-box">
+        <div class="prob-hint"><strong>Hint:</strong> ${p.hint}</div>
+        <pre>${p.tpl}</pre>
+      </div>`;
+    el.appendChild(row);
+  });
+}
+
+function toggleProb(el){
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.prob-row').forEach(r=>r.classList.remove('open'));
+  if(!wasOpen) el.classList.add('open');
+}
+
+// ================== CHEAT SHEET TEMPLATES ==================
+function buildFullTemplates(){
+  const el=document.getElementById('fullTemplates');
+  PATTERNS_DATA.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='full-template';
+    div.innerHTML=`
+      <div class="full-template-head">
+        <h3>${p.name}</h3>
+        <span class="tag ${TAG_CLASS[p.type]}">${TAG_LABEL[p.type]}</span>
+      </div>
+      <pre>${p.template}</pre>`;
+    el.appendChild(div);
+  });
+}
+
+// ================== SCROLL ==================
+window.addEventListener('scroll',()=>{
+  const pct=(window.scrollY/(document.body.scrollHeight-window.innerHeight))*100;
+  document.getElementById('scrollProg').style.width=pct+'%';
+
+  const sections=['theory','visualizer','patterns','problems','cheatsheet'];
+  const navLinks=document.querySelectorAll('nav a');
+  let cur='';
+  sections.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&window.scrollY>=el.offsetTop-100) cur=id;
+  });
+  navLinks.forEach(a=>{
+    a.classList.toggle('active',a.getAttribute('href')==='#'+cur);
+  });
+});
+
+// ================== INIT ==================
+buildPatterns();
+buildProbFilters();
+renderProblems();
+buildFullTemplates();
+renderViz();
+</script>
+</body>
+</html>
